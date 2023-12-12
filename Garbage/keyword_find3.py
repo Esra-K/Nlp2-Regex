@@ -44,10 +44,7 @@ for article_id, article in data.items():
 stopwords = re.compile(rf'(^|\s)({"|".join(stopwords_list())})(``)({"|".join(tagset)})')
 puncts = re.compile(rf'(^|\s)({"|".join(punct_set)})(``)(PUNCT)')
 ngrams = defaultdict(set)
-tf = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
-idf =  defaultdict(lambda: defaultdict(int))
 ngram_maxwords = 3
-keys_because_nested_dicts_suck = set()
 for category, article_list in categories.items():
     for id_counter, article_id in enumerate(article_list):
         article = data[article_id]
@@ -57,40 +54,36 @@ for category, article_list in categories.items():
         for i, tag in enumerate(tags):
             if re.search(stopwords, tag) or re.search(puncts, tag):
                 bad_indices.append(i)
-        temp_idf = {}
         for n in range(1, ngram_maxwords + 1):
             for ngram_index in range(len(tags) - n):
                 if len([index for index in bad_indices if ngram_index <= index < ngram_index + n]) > 0:
                     continue
                 ngram = " ".join(tags[ngram_index: ngram_index + n])
                 ngrams[category].add(ngram)
-                temp_idf[ngram] = 1
-                tf[category][article_id][ngram] += 1
-                keys_because_nested_dicts_suck.add((category, article_id, ngram))
-        for nnnnngram in temp_idf.keys():
-            idf[category][nnnnngram] += 1
         for percent in range(40):
             if id_counter == percent * len(article_list) // 40:
                 print(f"{percent/40} through {category}, {id_counter}")
 
-for key in keys_because_nested_dicts_suck:
-    category = key[0]
-    article_id = key[1]
-    ngram = key[2]
-    tf[category][article_id][ngram] /= idf[category][ngram]
+tf = rec_dd()
+idf = {}
+for category, ngram_set in ngrams.items():
+    article_list = categories[category]
+    categorized_data = {k:v for k, v in data.items() if k in article_list}
+    idf[category] = defaultdict(int)
+    for article_id, article in categorized_data.items():
+        sentences = article["tagged_sents"]
+        for ngram in ngram_set:
+            occurrence_count = sentences.count(ngram)
+            if  occurrence_count> 0:
+                tf[category][article_id][ngram] = occurrence_count
+                idf[category][ngram] += 1
+    print(category, ":", len(list(categorized_data.keys())))
 
+for category, article_id in categories.items():
+    article_ngrams = tf[category][article_id]
+    for ngram in article_ngrams.keys():
+        tf[category][article_id][ngram] /= idf[category][ngram] # + 0.001
 
 with open('../Results/tf.json', 'w') as fp:
     json.dump(tf, fp, sort_keys=True, indent=2, ensure_ascii=False)
 
-    # tfidf = TfidfVectorizer(vocabulary = list(ngram_set), ngram_range=(1, ngram_maxwords), lowercase=False)
-    # corpus = {k: v["tagged_sents"] for k, v in data.items() if v["category"] == category}
-    # tfs = tfidf.fit_transform(corpus.values())
-    # feature_names = tfidf.get_feature_names_out()
-    # corpus_index = [n for n in corpus]
-    # rows, cols = tfs.nonzero()
-    # for row, col in zip(rows, cols):
-    #     print((feature_names[col], corpus_index[row]), tfs[row, col])
-    # print(category)
-    # df = pd.DataFrame(tfs.T.todense(), index=feature_names, columns=corpus_index)
-    # df.to_excel(f'{category}.xlsx')

@@ -1,4 +1,4 @@
-
+import re
 
 
 def sentence_chunker(text):
@@ -29,3 +29,15 @@ def sentence_chunker(text):
 stopwords = re.compile(rf'(^|\s)({"|".join(stopwords_list())})(``)({"|".join(tagset)})')
 puncts = re.compile(rf'(^|\s)({"|".join(punct_set)})(``)(PUNCT)')
 # pos_regex = re.compile(rf'({"|".join(tagset)})')
+
+# tfidf = TfidfVectorizer(vocabulary = list(ngram_set), ngram_range=(1, ngram_maxwords), lowercase=False)
+# corpus = {k: v["tagged_sents"] for k, v in data.items() if v["category"] == category}
+# tfs = tfidf.fit_transform(corpus.values())
+# feature_names = tfidf.get_feature_names_out()
+# corpus_index = [n for n in corpus]
+# rows, cols = tfs.nonzero()
+# for row, col in zip(rows, cols):
+#     print((feature_names[col], corpus_index[row]), tfs[row, col])
+# print(category)
+# df = pd.DataFrame(tfs.T.todense(), index=feature_names, columns=corpus_index)
+# df.to_excel(f'{category}.xlsx')
