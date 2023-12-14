@@ -76,7 +76,5 @@ for key in keys_because_nested_dicts_suck:
     ngram = key[2]
     tf[category][article_id][ngram] /= idf[category][ngram]
 
-
 with open('../Results/tf.json', 'w') as fp:
     json.dump(tf, fp, sort_keys=True, indent=2, ensure_ascii=False)
-
